@@ -183,7 +183,7 @@ hljs.initHighlightingOnLoad();
 
 <p>The purpose of this assignment is to predict one of 5 different ways in which a person performed a barbell lift. A training dataset was obtained from <a href="https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv">https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv</a>.</p>
 
-<p>For our prediction study design we chose to split the provided training dataset into two parts:</p>
+<p>For the prediction study design I chose to split the provided training dataset into two parts:</p>
 
 <ul>
 <li>70% for training the model.</li>
@@ -242,7 +242,7 @@ training &lt;- data[inTrain, ]
 testing &lt;- data[-inTrain, ]
 </code></pre>
 
-<p>We first looked to see if we could find any columns with a high frequency of NA values and plotted the results:</p>
+<p>I first looked to see if I could find any columns with a high frequency of NA values and plotted the results:</p>
 
 <pre><code class="r">qplot(colSums(is.na(training)), xlab = &quot;Number of NAs in Column&quot;, ylab = &quot;Number of Columns&quot;, 
     main = &quot;NA Column Frequency&quot;)
@@ -295,9 +295,9 @@ testCols &lt;- dim(testing)[2]
 
 <h2>rpart Model Building</h2>
 
-<p>To build the model algorithm we used cross validation of the training dataset and chose 10-fold cross validation. This strategy allows for the training data to be split into 10 folds and the train function to use 9 folds to train the data and the remaining 10th fold to test the results. It will alternate through all possible combinations of the folds e.g. train on folds 1-9 and test on fold 10, then train on folds 1-8, 10 and test on fold 9 until all combinations have been trained and tested. This allows us to get a more accurate model without having to touch our testing dataset.</p>
+<p>To build the model algorithm I used cross validation of the training dataset and chose 10-fold cross validation. This strategy allows for the training data to be split into 10 folds and the train function to use 9 folds to train the data and the remaining 10th fold to test the results. It will alternate through all possible combinations of the folds e.g. train on folds 1-9 and test on fold 10, then train on folds 1-8, 10 and test on fold 9 until all combinations have been trained and tested. This allows one to get a more accurate model without having to touch the testing dataset.</p>
 
-<p>The first model we tried was the Recursive Partitioning and Regression Tree model which is called via the &ldquo;rpart&rdquo; method in the caret package. It builds models resulting in binary trees. We pass it the target variable &ldquo;training$classe&rdquo; and then all the other features from the dataset via &ldquo;.&rdquo; to build the model. 10 fold cross validation is specified in the trControl parameter. The code chunk below executes this code and also predicts the outcomes of the testing dataset into the rpartPred object.</p>
+<p>The first model I tried was the Recursive Partitioning and Regression Tree model which is called via the &ldquo;rpart&rdquo; method in the caret package. It builds models resulting in binary trees. I passed it the target variable &ldquo;training$classe&rdquo; and then all the other features from the dataset via &ldquo;.&rdquo; to build the model. 10 fold cross validation is specified in the trControl parameter. The code chunk below executes this code and also predicts the outcomes of the testing dataset into the rpartPred object.</p>
 
 <pre><code class="r">rpartFit &lt;- train(training$classe ~ ., data = training, method = &quot;rpart&quot;, trControl = trainControl(method = &quot;cv&quot;, 
     number = 10))
@@ -306,7 +306,7 @@ rpartPred &lt;- predict(rpartFit, testing)
 
 <h2>rpart Model Results</h2>
 
-<p>We list the accuracy and confusion matrix for the generated rpart model below:</p>
+<p>The accuracy and confusion matrix for the generated rpart model are listed below:</p>
 
 <pre><code class="r">postResample(rpartPred, testing$classe)
 </code></pre>
@@ -341,7 +341,7 @@ rpartPred &lt;- predict(rpartFit, testing)
 
 <h2>rf Model Building</h2>
 
-<p>Next we tried the Random Forest model called via the &ldquo;rf&rdquo; method in the caret package. This model uses an ensemble approach where by it creates a number of trees using different parts of the training data. It then allows the various trees making up the forest to vote on the predicted results. In this way we do not have one tree contributing to the final outcome but rather a combination of trees.</p>
+<p>Next I tried the Random Forest model called via the &ldquo;rf&rdquo; method in the caret package. This model uses an ensemble approach where by it creates a number of trees using different parts of the training data. It then allows the various trees making up the forest to vote on the predicted results. In this way you do not have one tree contributing to the final outcome but rather a combination of trees.</p>
 
 <p>To build the model algorithm the same 10 fold cross validation strategy, as mentioned above for the rpart method, was used.  </p>
 
@@ -354,7 +354,7 @@ rfPred &lt;- predict(rfFit, testing)
 
 <h2>rf Model Results</h2>
 
-<p>We list the accuracy and confusion matrix for the generated random forest model below:</p>
+<p>The accuracy and confusion matrix for the generated random forest model are listed below:</p>
 
 <pre><code class="r">postResample(rfPred, testing$classe)
 </code></pre>
@@ -385,7 +385,7 @@ rfPred &lt;- predict(rfFit, testing)
 
 <p>Out of sample error: <strong>0.68%</strong></p>
 
-<p>The results from the random forest method were extremly good and we were very happy with this result.</p>
+<p>The results from the random forest method were extremly good and I was very happy with this result.</p>
 
 <p>This model was then used to predict on the validation dataset and the 20 resultant predictions were all correct.</p>
 
