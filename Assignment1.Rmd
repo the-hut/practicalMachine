@@ -1,0 +1,112 @@
+Practical Machine Learning Assignment
+========================================================
+
+The purpose of this assignment is to predict one of 5 differnt ways in which a person performed a barbell lift. A training dataset was obtained from https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv.
+
+For our prediction study design we chose to split the provided training dataset into two parts:
+* 70% for training the model.
+* 30% for testing the model.
+
+A final validation set of 20 activities was also provided and was obtained from https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv. The best model obtained would be used to predict the activity of each of the 20 activities in the validation dataset and submitted for marking.
+
+The caret package was first loaded as this was used extensively throughout the analysis.  
+The doMC package was also loaded to allow parallel processing of the model training.
+```{r}
+library(caret)
+library(doMC)
+registerDoMC(cores = 6)
+```
+The initial data were loaded and checked for overall data quality. A high frequency of NA values in the form of both NA and #DIV/0! were noted and can be seen from the sample output listed below:
+```{r cache=TRUE}
+data <- read.csv("pml-training.csv", row.names=1)
+summary(data[,c(13,17)])
+```
+
+The data were loaded again but this time the NA and #DIV/0! values were cleaned up during the loading step.  
+The data were then split it into the training and testing sets with a 70% ratio as mentioned previously.
+```{r cache=TRUE}
+data <- read.csv("pml-training.csv", na.strings=c("#DIV/0!", "NA"), row.names=1)
+
+set.seed(1122)
+inTrain <- createDataPartition(y = data$classe, p=0.7,list=FALSE) 
+training <- data[inTrain,]
+testing <- data[-inTrain,]
+
+```
+
+We first looked to see if we could find any columns with a high frequency of NA values and plotted the results:
+```{r}
+qplot(colSums(is.na(training)), xlab="Number of NAs in Column", ylab="Number of Columns", main="NA Column Frequency")
+```
+All the columns on the far right have a very high frequency of NA values and will offer little benefit to the model.  
+It was also noted that the first six columns have no meaning with regards to the target variable and these are listed below for reference:  
+```{r}
+head(training[,c(1:6)])
+```
+Two steps were thus taken and applied these changes to the training and testing datasets:  
+1 Removed the first 6 columns.  
+2 Removed all columns with an NA frequency of higher than 90%.  
+
+```{r}
+training <- training[,-c(1:6)]
+training <- training[,colSums(is.na(training))<nrow(training)/100*90]
+
+testing <- testing[,-c(1:6)]
+testing <- testing[,colSums(is.na(testing))<nrow(testing)/100*90]
+
+trainCount <- dim(training)[1]
+trainCols <- dim(training)[2]
+testCount <- dim(testing)[1]
+testCols <- dim(testing)[2]
+```
+We are left with `r trainCount` rows and `r trainCols` columns in the training dataset along with `r testCount` rows and `r testCols` columns in the testing dataset. This includes the target variable which is the classe column.
+
+To build the model algorithm we used cross validation of the training dataset and chose 10-fold cross validation. This strategy allows for the training data to be split into 10 folds and the train function to use 9 folds to train the data and the remaining 10th fold to test the results. It will alternate through all possible combinations of the folds e.g. train on folds 1-9 and test on fold 10, then train on folds 1-8, 10 and test on fold 9 until all combinations have been trained and tested. This allows us to get a more accurate model without having to touch our testing dataset.
+
+The first model we tried was the Recursive Partitioning and Regression Tree model which is called via the "rpart" method in the caret package. It builds models resulting in binary trees. We pass it the target variable "training$classe" and then all the other features from the dataset via "." to build the model. 10 fold cross validation is specified in the trControl parameter. The code chunk below executes this code and also predicts the outcomes of the testing dataset into the rpartPred object.
+```{r cache=TRUE}
+rpartFit <- train(training$classe ~., data = training, method="rpart", trControl=trainControl(method="cv", number=10))
+rpartPred <- predict(rpartFit, testing)
+```
+We list the accuracy and confusion matrix for the generated rpart model below:
+```{r}
+postResample(rpartPred, testing$classe)
+confusionMatrix(rpartPred, testing$classe)$table
+```
+As can be seen this model did not perform well.
+
+The below code calculates the out of sample error:
+```{r}
+rpartOutOfSampleError <- round((1 - postResample(rpartPred, testing$classe)[1])*100,2)
+```
+Out of sample error: `r rpartOutOfSampleError`%
+
+The results from the rpart method were not found to be good enough.  
+
+Next we tried the Random Forest model called via the "rf" method in the caret package. This model uses an ensemble approach where by it creates a number of trees using different parts of the training data. It then allows the various trees making up the forest to vote on the predicted results. In this way we do not have one tree contributing to the final outcome but rather a combination of trees.
+
+To build the model algorithm the same 10 fold cross validation strategy, as mentioned above for the rpart method, was used.  
+
+The following code trains the random forest model using the same parameters mentioned for rpart above with the only change being the method. The predicted values of the testing dataset are stored in the rfPred object:
+```{r cache=TRUE}
+rfFit <- train(training$classe ~.,data = training,method="rf", trControl=trainControl(method="cv", number=10))
+rfPred <- predict(rfFit, testing)
+```
+
+We list the accuracy and confusion matrix for the generated random forest model below:
+```{r}
+postResample(rfPred, testing$classe)
+confusionMatrix(rfPred, testing$classe)$table
+```
+As can be seen this model performed very well.
+
+The below code calculates the out of sample error:
+```{r}
+rfOutOfSampleError <- round((1 - postResample(rfPred, testing$classe)[1])*100,2)
+```
+Out of sample error: `r rfOutOfSampleError`%
+
+The results from the random forest method were extremly good and we were very happy with this result.
+
+This model was then used to predict on the validation dataset and the 20 resultant predictions were all correct.
+
