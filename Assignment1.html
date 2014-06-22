@@ -181,7 +181,7 @@ hljs.initHighlightingOnLoad();
 <body>
 <h1>Practical Machine Learning Assignment</h1>
 
-<p>The purpose of this assignment is to predict one of 5 differnt ways in which a person performed a barbell lift. A training dataset was obtained from <a href="https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv">https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv</a>.</p>
+<p>The purpose of this assignment is to predict one of 5 different ways in which a person performed a barbell lift. A training dataset was obtained from <a href="https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv">https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv</a>.</p>
 
 <p>For our prediction study design we chose to split the provided training dataset into two parts:</p>
 
@@ -212,6 +212,8 @@ The doMC package was also loaded to allow parallel processing of the model train
 
 <pre><code class="r">registerDoMC(cores = 6)
 </code></pre>
+
+<h2>Data Processing</h2>
 
 <p>The initial data were loaded and checked for overall data quality. A high frequency of NA values in the form of both NA and #DIV/0! were noted and can be seen from the sample output listed below:</p>
 
@@ -273,9 +275,9 @@ It was also noted that the first six columns have no meaning with regards to the
 ## 7         no         12
 </code></pre>
 
-<p>Two steps were thus taken and applied these changes to the training and testing datasets:<br/>
-1 Removed the first 6 columns.<br/>
-2 Removed all columns with an NA frequency of higher than 90%.  </p>
+<p>Two steps were thus taken and applied to both the training and testing datasets:<br/>
+1. Removed the first 6 columns.<br/>
+2. Removed all columns with an NA frequency of higher than 90%.  </p>
 
 <pre><code class="r">training &lt;- training[, -c(1:6)]
 training &lt;- training[, colSums(is.na(training)) &lt; nrow(training)/100 * 90]
@@ -291,6 +293,8 @@ testCols &lt;- dim(testing)[2]
 
 <p>We are left with 13737 rows and 53 columns in the training dataset along with 5885 rows and 53 columns in the testing dataset. This includes the target variable which is the classe column.</p>
 
+<h2>rpart Model Building</h2>
+
 <p>To build the model algorithm we used cross validation of the training dataset and chose 10-fold cross validation. This strategy allows for the training data to be split into 10 folds and the train function to use 9 folds to train the data and the remaining 10th fold to test the results. It will alternate through all possible combinations of the folds e.g. train on folds 1-9 and test on fold 10, then train on folds 1-8, 10 and test on fold 9 until all combinations have been trained and tested. This allows us to get a more accurate model without having to touch our testing dataset.</p>
 
 <p>The first model we tried was the Recursive Partitioning and Regression Tree model which is called via the &ldquo;rpart&rdquo; method in the caret package. It builds models resulting in binary trees. We pass it the target variable &ldquo;training$classe&rdquo; and then all the other features from the dataset via &ldquo;.&rdquo; to build the model. 10 fold cross validation is specified in the trControl parameter. The code chunk below executes this code and also predicts the outcomes of the testing dataset into the rpartPred object.</p>
@@ -299,6 +303,8 @@ testCols &lt;- dim(testing)[2]
     number = 10))
 rpartPred &lt;- predict(rpartFit, testing)
 </code></pre>
+
+<h2>rpart Model Results</h2>
 
 <p>We list the accuracy and confusion matrix for the generated rpart model below:</p>
 
@@ -329,9 +335,11 @@ rpartPred &lt;- predict(rpartFit, testing)
     100, 2)
 </code></pre>
 
-<p>Out of sample error: 50.67%</p>
+<p>Out of sample error: <strong>50.67%</strong></p>
 
 <p>The results from the rpart method were not found to be good enough.  </p>
+
+<h2>rf Model Building</h2>
 
 <p>Next we tried the Random Forest model called via the &ldquo;rf&rdquo; method in the caret package. This model uses an ensemble approach where by it creates a number of trees using different parts of the training data. It then allows the various trees making up the forest to vote on the predicted results. In this way we do not have one tree contributing to the final outcome but rather a combination of trees.</p>
 
@@ -343,6 +351,8 @@ rpartPred &lt;- predict(rpartFit, testing)
     number = 10))
 rfPred &lt;- predict(rfFit, testing)
 </code></pre>
+
+<h2>rf Model Results</h2>
 
 <p>We list the accuracy and confusion matrix for the generated random forest model below:</p>
 
@@ -373,7 +383,7 @@ rfPred &lt;- predict(rfFit, testing)
     100, 2)
 </code></pre>
 
-<p>Out of sample error: 0.68%</p>
+<p>Out of sample error: <strong>0.68%</strong></p>
 
 <p>The results from the random forest method were extremly good and we were very happy with this result.</p>
 
